@@ -1,3 +1,4 @@
+import { OrbitControls } from '@react-three/drei'
 import { Box, Sphere, PerspectiveCamera, Html } from "@react-three/drei";
 import { RapierRigidBody, RigidBody } from "@react-three/rapier";
 import { useState, useRef, useEffect } from "react";
@@ -107,7 +108,7 @@ const Vehicle: React.FC<VehicleProps> = ({ isGameOver, setIsGameOver }) => {
       <directionalLight position={[-10, 10, 0]} intensity={0.4} />
 
       <PerspectiveCamera makeDefault ref={cameraRef} fov={80} near={0.5} far={1000} position={[5, -5, 20]} />
-
+      <OrbitControls />
       <RigidBody
         ref={vehicleRef}
         position={[0, 1.5, 0]}
