@@ -1,5 +1,5 @@
-import { OrbitControls } from '@react-three/drei'
-import { Box, Sphere, PerspectiveCamera, Html } from "@react-three/drei";
+import { OrbitControls } from '@react-three/drei';
+import { Box, Sphere, PerspectiveCamera } from "@react-three/drei";
 import { RapierRigidBody, RigidBody } from "@react-three/rapier";
 import { useState, useRef, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
@@ -11,48 +11,64 @@ interface VehicleProps {
   isGameOver: boolean;
   setIsGameOver: (isGameOver: boolean) => void;
 }
+
 const Vehicle: React.FC<VehicleProps> = ({ isGameOver, setIsGameOver }) => {
   const [isMovingForward, setIsMovingForward] = useState(false);
   const [isReversing, setIsReversing] = useState(false);
-
+  const controlsRef = useRef<any>(null);
   const vehicleRef = useRef<RapierRigidBody>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
   const forwardSpeed = 5;
   const reverseSpeed = 3;
-
-
   const roadTexture = new THREE.TextureLoader().load(roadTextureImage.src);
   roadTexture.wrapS = THREE.RepeatWrapping;
   roadTexture.wrapT = THREE.RepeatWrapping;
   roadTexture.repeat.set(50, 50);
 
   useFrame((state) => {
-    const { camera } = state;
+    const { x, y } = state.pointer;
+    const camera = state.camera as THREE.PerspectiveCamera;
 
-    if (vehicleRef.current) {
+    if (vehicleRef.current && camera) {
+      const raycaster = new THREE.Raycaster();
+      const pointerVector = new THREE.Vector2(x, y);
+      raycaster.setFromCamera(pointerVector, camera);
+
+      // Calculate intersection point with the ground (y = 0 plane)
+      const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); // y = 0 plane
+      const targetPosition = new THREE.Vector3();
+      raycaster.ray.intersectPlane(plane, targetPosition);
+
       const vehiclePosition = new THREE.Vector3(
         vehicleRef.current.translation().x,
         vehicleRef.current.translation().y,
         vehicleRef.current.translation().z
       );
 
+      // Calculate direction vector from vehicle to target position
+      const direction = new THREE.Vector3()
+        .subVectors(targetPosition, vehiclePosition)
+        .normalize();
+
       const impulse = new THREE.Vector3();
-      const forwardDirection = new THREE.Vector3(0, 0, -1);
-      forwardDirection.applyQuaternion(vehicleRef.current.rotation());
 
       if (isMovingForward) {
-        impulse.copy(forwardDirection).multiplyScalar(forwardSpeed);
+        impulse.copy(direction).multiplyScalar(forwardSpeed);
         vehicleRef.current.applyImpulse(impulse, true);
       } else if (isReversing) {
-        impulse.copy(forwardDirection).multiplyScalar(-reverseSpeed);
+        impulse.copy(direction).multiplyScalar(-reverseSpeed);
         vehicleRef.current.applyImpulse(impulse, true);
       }
 
-      if (cameraRef.current) {
-        const cameraOffset = new THREE.Vector3(0, 5, 10);
-        const cameraPosition = vehiclePosition.clone().add(cameraOffset);
-        camera.position.copy(cameraPosition);
-        camera.lookAt(vehiclePosition);
+      if (cameraRef.current && controlsRef.current) {
+        controlsRef.current.target.copy(vehiclePosition);
+        const cameraLook = new THREE.Vector3(
+          controlsRef.current.target.x,
+          controlsRef.current.target.y + 5,
+          vehicleRef.current.translation().z + 10
+        );
+        camera.lookAt(cameraLook);
+        controlsRef.current.update();
       }
     }
   });
@@ -103,12 +119,10 @@ const Vehicle: React.FC<VehicleProps> = ({ isGameOver, setIsGameOver }) => {
 
   return (
     <>
-
       <ambientLight intensity={0.5} />
       <directionalLight position={[-10, 10, 0]} intensity={0.4} />
-
-      <PerspectiveCamera makeDefault ref={cameraRef} fov={80} near={0.5} far={1000} position={[5, -5, 20]} />
-      <OrbitControls />
+      <PerspectiveCamera makeDefault ref={cameraRef} fov={80} near={0.5} far={1000} position={[0, 5, 10]} />
+      <OrbitControls ref={controlsRef} />
       <RigidBody
         ref={vehicleRef}
         position={[0, 1.5, 0]}
@@ -116,7 +130,7 @@ const Vehicle: React.FC<VehicleProps> = ({ isGameOver, setIsGameOver }) => {
         rotation={[0, 0, 0]}
         linearDamping={0.5}
         angularDamping={0.5}
-        name="vehicle" // Add a name to identify the vehicle
+        name="vehicle"
       >
         <Box args={[2, 1, 4]}>
           <meshStandardMaterial color="royalblue" />
@@ -131,15 +145,12 @@ const Vehicle: React.FC<VehicleProps> = ({ isGameOver, setIsGameOver }) => {
           <meshStandardMaterial color="black" />
         </Box>
       </RigidBody>
-
       <FallingShapes onCollision={onCollisionWithShape} />
-
       <RigidBody type="fixed" name="floor">
         <Box position={[0, 0, 0]} args={[1000, 1, 1000]}>
           <meshStandardMaterial map={roadTexture} />
         </Box>
       </RigidBody>
-
     </>
   );
 };
