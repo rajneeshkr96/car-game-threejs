@@ -1,4 +1,4 @@
-import { OrbitControls } from '@react-three/drei';
+import { Cylinder, OrbitControls } from '@react-three/drei';
 import { Box, Sphere, PerspectiveCamera } from "@react-three/drei";
 import { RapierRigidBody, RigidBody } from "@react-three/rapier";
 import { useState, useRef, useEffect } from "react";
@@ -122,7 +122,7 @@ const Vehicle: React.FC<VehicleProps> = ({ isGameOver, setIsGameOver }) => {
       <OrbitControls
         ref={controlsRef}
         maxDistance={10}
-        minDistance={10}
+        // minDistance={10}
         enableDamping={true}
         dampingFactor={0.1}
       />
@@ -141,12 +141,12 @@ const Vehicle: React.FC<VehicleProps> = ({ isGameOver, setIsGameOver }) => {
         <Sphere args={[0.5, 32, 32]} position={[0, -0.5, 1.5]}>
           <meshStandardMaterial color="black" />
         </Sphere>
-        <Box args={[0.3, 0.3, 0.5]} position={[-0.9, -0.5, -1.5]} rotation={[0, 0, Math.PI / 2]}>
+        <Cylinder  args={[0.3, 0.3, 0.5]} position={[-0.9, -0.5, -1.5]} rotation={[0, 0, Math.PI / 2]}>
           <meshStandardMaterial color="black" />
-        </Box>
-        <Box args={[0.3, 0.3, 0.5]} position={[0.9, -0.5, -1.5]} rotation={[0, 0, Math.PI / 2]}>
+        </Cylinder >
+        <Cylinder  args={[0.3, 0.3, 0.5]} position={[0.9, -0.5, -1.5]} rotation={[0, 0, Math.PI / 2]}>
           <meshStandardMaterial color="black" />
-        </Box>
+        </Cylinder >
       </RigidBody>
       <FallingShapes onCollision={onCollisionWithShape} />
       <RigidBody type="fixed" name="floor">
