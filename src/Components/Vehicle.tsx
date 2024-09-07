@@ -34,8 +34,8 @@ const Vehicle: React.FC<VehicleProps> = ({ isGameOver, setIsGameOver }) => {
       const pointerVector = new THREE.Vector2(x, y);
       raycaster.setFromCamera(pointerVector, camera);
 
-      // Calculate intersection point with the ground (y = 0 plane)
-      const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); // y = 0 plane
+
+      const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); 
       const targetPosition = new THREE.Vector3();
       raycaster.ray.intersectPlane(plane, targetPosition);
 
@@ -45,7 +45,6 @@ const Vehicle: React.FC<VehicleProps> = ({ isGameOver, setIsGameOver }) => {
         vehicleRef.current.translation().z
       );
 
-      // Calculate direction vector from vehicle to target position
       const direction = new THREE.Vector3()
         .subVectors(targetPosition, vehiclePosition)
         .normalize();
@@ -55,19 +54,17 @@ const Vehicle: React.FC<VehicleProps> = ({ isGameOver, setIsGameOver }) => {
       if (isMovingForward) {
         impulse.copy(direction).multiplyScalar(forwardSpeed);
         vehicleRef.current.applyImpulse(impulse, true);
+        const angle = Math.atan2(direction.x, direction.z); 
+        vehicleRef.current.setRotation(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, angle, 0)),false);
       } else if (isReversing) {
+        const angle = Math.atan2(-direction.x, -direction.z); 
+        vehicleRef.current.setRotation(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, angle, 0)),false);
         impulse.copy(direction).multiplyScalar(-reverseSpeed);
         vehicleRef.current.applyImpulse(impulse, true);
       }
 
       if (cameraRef.current && controlsRef.current) {
         controlsRef.current.target.copy(vehiclePosition);
-        const cameraLook = new THREE.Vector3(
-          controlsRef.current.target.x,
-          controlsRef.current.target.y + 5,
-          vehicleRef.current.translation().z + 10
-        );
-        camera.lookAt(cameraLook);
         controlsRef.current.update();
       }
     }
@@ -122,7 +119,13 @@ const Vehicle: React.FC<VehicleProps> = ({ isGameOver, setIsGameOver }) => {
       <ambientLight intensity={0.5} />
       <directionalLight position={[-10, 10, 0]} intensity={0.4} />
       <PerspectiveCamera makeDefault ref={cameraRef} fov={80} near={0.5} far={1000} position={[0, 5, 10]} />
-      <OrbitControls ref={controlsRef} />
+      <OrbitControls
+        ref={controlsRef}
+        maxDistance={10}
+        minDistance={10}
+        enableDamping={true}
+        dampingFactor={0.1}
+      />
       <RigidBody
         ref={vehicleRef}
         position={[0, 1.5, 0]}
