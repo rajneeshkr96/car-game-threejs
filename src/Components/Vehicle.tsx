@@ -122,7 +122,7 @@ const Vehicle: React.FC<VehicleProps> = ({ isGameOver, setIsGameOver }) => {
       <OrbitControls
         ref={controlsRef}
         maxDistance={10}
-        // minDistance={10}
+        minDistance={10}
         enableDamping={true}
         dampingFactor={0.1}
       />
