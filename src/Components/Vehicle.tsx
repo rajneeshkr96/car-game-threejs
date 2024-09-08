@@ -10,9 +10,11 @@ import { FallingShapes } from "./FallingShapes";
 interface VehicleProps {
   isGameOver: boolean;
   setIsGameOver: (isGameOver: boolean) => void;
+  startTime: number,
+  setScore: (score: number) => void;
 }
 
-const Vehicle: React.FC<VehicleProps> = ({ isGameOver, setIsGameOver }) => {
+const Vehicle: React.FC<VehicleProps> = ({ isGameOver, setIsGameOver, startTime,setScore }) => {
   const [isMovingForward, setIsMovingForward] = useState(false);
   const [isReversing, setIsReversing] = useState(false);
   const controlsRef = useRef<any>(null);
@@ -35,7 +37,7 @@ const Vehicle: React.FC<VehicleProps> = ({ isGameOver, setIsGameOver }) => {
       raycaster.setFromCamera(pointerVector, camera);
 
 
-      const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); 
+      const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
       const targetPosition = new THREE.Vector3();
       raycaster.ray.intersectPlane(plane, targetPosition);
 
@@ -54,11 +56,11 @@ const Vehicle: React.FC<VehicleProps> = ({ isGameOver, setIsGameOver }) => {
       if (isMovingForward) {
         impulse.copy(direction).multiplyScalar(forwardSpeed);
         vehicleRef.current.applyImpulse(impulse, true);
-        const angle = Math.atan2(direction.x, direction.z); 
-        vehicleRef.current.setRotation(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, angle, 0)),false);
+        const angle = Math.atan2(direction.x, direction.z);
+        vehicleRef.current.setRotation(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, angle, 0)), false);
       } else if (isReversing) {
-        const angle = Math.atan2(-direction.x, -direction.z); 
-        vehicleRef.current.setRotation(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, angle, 0)),false);
+        const angle = Math.atan2(-direction.x, -direction.z);
+        vehicleRef.current.setRotation(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, angle, 0)), false);
         impulse.copy(direction).multiplyScalar(-reverseSpeed);
         vehicleRef.current.applyImpulse(impulse, true);
       }
@@ -89,7 +91,19 @@ const Vehicle: React.FC<VehicleProps> = ({ isGameOver, setIsGameOver }) => {
   const handleGameOver = () => {
     if (!isGameOver) {
       setIsGameOver(true);
-      console.log('Game Over');
+      const time = new Date()
+      const score = Math.floor((time.getTime() - startTime) / 1000);
+      console.log(score)
+      setScore(score);
+      fetch(`/api/score/${score}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      }).then((res) => res.json()).then((data) => {
+        
+        console.log("object")
+      });
     }
   };
 
@@ -141,10 +155,10 @@ const Vehicle: React.FC<VehicleProps> = ({ isGameOver, setIsGameOver }) => {
         <Sphere args={[0.5, 32, 32]} position={[0, -0.5, 1.5]}>
           <meshStandardMaterial color="black" />
         </Sphere>
-        <Cylinder  args={[0.3, 0.3, 0.5]} position={[-0.9, -0.5, -1.5]} rotation={[0, 0, Math.PI / 2]}>
+        <Cylinder args={[0.3, 0.3, 0.5]} position={[-0.9, -0.5, -1.5]} rotation={[0, 0, Math.PI / 2]}>
           <meshStandardMaterial color="black" />
         </Cylinder >
-        <Cylinder  args={[0.3, 0.3, 0.5]} position={[0.9, -0.5, -1.5]} rotation={[0, 0, Math.PI / 2]}>
+        <Cylinder args={[0.3, 0.3, 0.5]} position={[0.9, -0.5, -1.5]} rotation={[0, 0, Math.PI / 2]}>
           <meshStandardMaterial color="black" />
         </Cylinder >
       </RigidBody>
